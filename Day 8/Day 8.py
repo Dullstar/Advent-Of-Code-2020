@@ -107,12 +107,7 @@ def correct_code(code: list):
 
 def main():
     code = parse_input("input.txt")
-    visited = []
-    console = Console()
-    next_command = 0
-    # Part 1
-    output = run_code(code)
-
+    run_code(code)
     correct_code(code)
 
 
