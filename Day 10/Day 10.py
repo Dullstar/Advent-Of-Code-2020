@@ -12,7 +12,6 @@ def get_deltas(adapters: list, output: bool = True):
     delta_dict = {}
     for adapter in adapters:
         delta = adapter - prev_voltage
-        # I hope this works if there wasn't a value there before; guessing it won't though
         if delta not in delta_dict:
             delta_dict[delta] = 1
         else:
@@ -21,6 +20,7 @@ def get_deltas(adapters: list, output: bool = True):
 
     if output:
         # The following may not be safe for arbitrary inputs, since we've assumed some stuff exists
+
         # Accounts for a provision in the problem regarding the final adapter in the chain
         delta_dict[3] += 1
         print("Distribution:")
