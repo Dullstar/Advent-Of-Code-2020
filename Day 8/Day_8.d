@@ -68,12 +68,11 @@ public:
 
     bool run_all(ref Instruction[] code) {
         reset();
-		// an associateive array would be more memory efficient,
+		// an associative array would be more memory efficient,
         // but this should be faster.
         bool[] visited;  // syntax note: bools should initialize to false by default
         visited.length = code.length;
-		foreach (cmd; code) {
-            if (program_counter >= code.length) break;
+		while (program_counter < code.length) {
             if (visited[program_counter]) return false;
 			visited[program_counter] = true;
             execute_command(code[program_counter]);
