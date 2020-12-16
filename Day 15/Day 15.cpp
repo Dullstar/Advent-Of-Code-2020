@@ -1,10 +1,5 @@
-// Note: this one should use less memory than the other one, but it's slower.
-// Still a useful demonstration of the speed difference between std::vector and std::unordered_map
-// for a situation where they can both work
-
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -15,23 +10,25 @@
 
 class MemGame {
 public:
-	std::unordered_map<int, int> memory;
+	std::vector<int> memory;  // too big for std::array
 	int turn_count;
 	int previous_num;
-	MemGame(std::vector<int> numbers) {
+	MemGame(std::vector<int> numbers) 
+		: memory(30000000, -1), previous_num(0)
+	{
 		turn_count = 1;
 		for (const auto& number : numbers) {
 			memory[number] = turn_count;
 			previous_num = number;
 			turn_count++;
 		}
-		memory.erase(previous_num);
+		memory[previous_num] = -1;
 	}
 
 	void process_turn() {
 		int next;
 		int previous_turn = turn_count - 1;
-		if (memory.find(previous_num) == memory.end()) {  // wasn't found
+		if (memory[previous_num] == -1) {  // wasn't found
 			next = 0;
 		}
 		else next = previous_turn - memory[previous_num];

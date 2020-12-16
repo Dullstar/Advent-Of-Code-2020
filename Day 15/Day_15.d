@@ -6,27 +6,28 @@ import std.string;
 import std.datetime.stopwatch;
 
 class MemGame {
-    int[int] memory;
+    int[] memory;
     int turn_count;
     int previous_num;
     this(int[] numbers) {
+        memory.length = 30000000;
+        memory[] = -1;
         turn_count = 1;
         foreach(number; numbers) {
             memory[number] = turn_count;
             previous_num = number;
             turn_count++;
         }
-        memory.remove(previous_num);
+        memory[previous_num] = -1;
     }
 
     void process_turn() {
         int next;
         int previous_turn = turn_count - 1;
-        int* ptr = (previous_num in memory);
-        if (ptr is null)
+        if (memory[previous_num] == -1)
             next = 0;
         else {
-            next = previous_turn - *ptr;
+            next = previous_turn - memory[previous_num];
         }
 
         // writeln("Turn ", turn_count, ": ", next);
@@ -61,11 +62,11 @@ auto parse_input(string filename) {
 void main() {
     //auto sw = StopWatch(AutoStart.yes);
     auto start = MonoTime.currTime;
-    auto numbers = parse_input("input.txt");
+    auto numbers = parse_input("test_input.txt");
     auto game = new MemGame(numbers);
     game.process_to(2021);
     game.process_to(30000001);
-    writeln((MonoTime.currTime - start));
+    writeln((MonoTime.currTime - start).total!"msecs", "ms");
     //sw.stop();
     //writeln(sw.peek);
 }
