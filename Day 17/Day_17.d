@@ -6,6 +6,8 @@ import core.time;
 import std.conv;
 import Day_17_pt2;
 
+// Today's lesson: TELL, DON'T ASK. I lost sight of this today, and so a problem that should've
+// been short took about 11 hours. Part 1 is left as-is as a reminder of how much messier asking is.
 
 struct point_3d {
     int x;
@@ -41,22 +43,14 @@ public:
     }
 
     bool check_neighbors(CubeContainer cubes) {
-        //File file = File("output.txt", "a");
-        //file.writeln("\nChecking neighbors of ", point.x, " ", point.y, " ", point.z);
-        //file.writeln("This cube is active? ", m_active);
-        int number_neighbors = m_neighbors.length.to!int;
         int active_neighbors = 0;
         foreach(neighbor; m_neighbors) {
             if (neighbor.active) {
-                //file.writeln("Active neighbor detected.", neighbor.point.x, " ", neighbor.point.y, " ", neighbor.point.z);
                 active_neighbors++;
             }
-            //else file.writeln("Inactive neighbor detected.", neighbor.point.x, " ", neighbor.point.y, " ", neighbor.point.z);
         }
 
         if (m_active) {
-            //writeln("I'm checking my neighbors! I'm at ", m_point.x, ",", m_point.y, ",", m_point.z, " and I have ", active_neighbors, " active neighbors!");
-            //writeln("But I also have ", m_neighbors.length, " neighbors...");
             if (active_neighbors == 2 || active_neighbors == 3) {
                 m_will_be_active = true;
             }
@@ -128,7 +122,6 @@ public:
         foreach (cube; m_cubes) {
             give_cube_neighbors(cube);
             assert(cube.m_neighbors.length == 26);
-            // terrible_debug_output_function(0);
         }
     }
 
@@ -150,20 +143,15 @@ public:
             if (cube.check_neighbors(this)) active_cubes += 1;
         }
         foreach (cube; m_cubes) {
-            //writeln("Checking a cube! ", cube.m_point.x, " ", cube.m_point.y, " ", cube.m_point.z, " ", cube.m_active);
-            // I have no idea why the commented out line below doesn't work, but it doesn't work. It really seems like it should, though.
-            // if ((cube.m_active || cube.m_will_be_active) && cube.m_neighbors.length != 26)
-            // Because if we *don't* this is really slow. Tbh, I expected it would become an infinite loop, but apparently not.
-            //if (cube.m_neighbors.length != 26) {
-            //    give_cube_neighbors(cube);
-            //}
             cube.apply_changes();
         }
         writeln("Round ", round, ": ", active_cubes, " active cubes.");
-        // terrible_debug_output_function(round);
+        // visualizer_output_function(round);
     }
-
-    void terrible_debug_output_function(int round) {
+    
+    // the visualizer is a separate program, but it doesn't have the capability to run the simulation.
+    // it was originally created for debugging purposes.
+    void visualizer_output_function(int round) {
         string filename = "debug" ~ to!string(round) ~ ".txt";
         File file = File(filename, "w");
         foreach(i, cube; m_cubes) {
@@ -191,9 +179,9 @@ auto parse_input(string filename) {
     CubeContainer cubes = new CubeContainer;
     
     auto lines = raw_contents.split("\n");
-    foreach (x, line; lines) {
+    foreach (y, line; lines) {
         line = line.strip();
-        foreach (y, c; line) {
+        foreach (x, c; line) {
             bool active;
             switch (c) {
                 case '.':
@@ -216,7 +204,7 @@ auto parse_input(string filename) {
 void main()
 {
     auto start_time = MonoTime.currTime;
-    const string filename = "test_input.txt";
+    const string filename = "input.txt";
     auto cubes = parse_input(filename);
     cubes.initialize_cube_neighbors();
     foreach (round; 1 .. 7) {
@@ -224,7 +212,6 @@ void main()
     }
     auto end_time1 = MonoTime.currTime;
     HypercubeContainer cubes2 = parse_input_pt2(filename);
-    cubes2.initialize_cube_neighbors();
     writeln();
     foreach (round; 1 .. 7) {
         cubes2.update_cubes(round);
