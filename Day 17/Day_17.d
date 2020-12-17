@@ -4,6 +4,7 @@ import std.stdio;
 import std.string;
 import core.time;
 import std.conv;
+import Day_17_pt2;
 
 
 struct point_3d {
@@ -39,14 +40,14 @@ public:
         m_active = m_will_be_active;
     }
 
-    bool check_neighbors() {
+    bool check_neighbors(CubeContainer cubes) {
         //File file = File("output.txt", "a");
         //file.writeln("\nChecking neighbors of ", point.x, " ", point.y, " ", point.z);
         //file.writeln("This cube is active? ", m_active);
-        int number_neighbors = m_neighbors.length;
+        int number_neighbors = m_neighbors.length.to!int;
         int active_neighbors = 0;
         foreach(neighbor; m_neighbors) {
-            if (neighbor.active == true) {
+            if (neighbor.active) {
                 //file.writeln("Active neighbor detected.", neighbor.point.x, " ", neighbor.point.y, " ", neighbor.point.z);
                 active_neighbors++;
             }
@@ -64,6 +65,15 @@ public:
         else if (!m_active && active_neighbors == 3)
             m_will_be_active = true;
         else m_will_be_active = false;
+
+        if (m_will_be_active) {
+            foreach(neighbor; m_neighbors) {
+                if (neighbor.m_neighbors.length != 26) {
+                    cubes.give_cube_neighbors(*neighbor);
+                }
+            }
+        }
+
         return m_will_be_active;
     }
 
@@ -71,7 +81,7 @@ public:
         foreach (x; m_point.x - 1 .. m_point.x + 2)
             foreach (y; m_point.y - 1 .. m_point.y + 2)
                 foreach(z; m_point.z - 1 .. m_point.z + 2) {
-                    if (x == 0 && y == 0 && z == 0) continue;
+                    if (x == m_point.x && y == m_point.y && z == m_point.z) continue;
                     // this time, we DON'T want to create new neighbors.
                     Cube* ptr = point_3d(x, y, z) in cubes;
                     if (ptr !is null) m_neighbors ~= ptr;
@@ -118,7 +128,7 @@ public:
         foreach (cube; m_cubes) {
             give_cube_neighbors(cube);
             assert(cube.m_neighbors.length == 26);
-            terrible_debug_output_function(0);
+            // terrible_debug_output_function(0);
         }
     }
 
@@ -137,20 +147,20 @@ public:
     void update_cubes(int round) {
         int active_cubes = 0;
         foreach (cube; m_cubes) {
-            if (cube.check_neighbors()) active_cubes += 1;
+            if (cube.check_neighbors(this)) active_cubes += 1;
         }
         foreach (cube; m_cubes) {
             //writeln("Checking a cube! ", cube.m_point.x, " ", cube.m_point.y, " ", cube.m_point.z, " ", cube.m_active);
             // I have no idea why the commented out line below doesn't work, but it doesn't work. It really seems like it should, though.
             // if ((cube.m_active || cube.m_will_be_active) && cube.m_neighbors.length != 26)
             // Because if we *don't* this is really slow. Tbh, I expected it would become an infinite loop, but apparently not.
-            if (cube.m_neighbors.length != 26) {
-                give_cube_neighbors(cube);
-            }
+            //if (cube.m_neighbors.length != 26) {
+            //    give_cube_neighbors(cube);
+            //}
             cube.apply_changes();
         }
         writeln("Round ", round, ": ", active_cubes, " active cubes.");
-        terrible_debug_output_function(round);
+        // terrible_debug_output_function(round);
     }
 
     void terrible_debug_output_function(int round) {
@@ -176,7 +186,6 @@ auto parse_input(string filename) {
     string raw_contents;
     while (file.readln(buffer)) {
         raw_contents ~= buffer;
-        writeln(buffer);
     }
 
     CubeContainer cubes = new CubeContainer;
@@ -201,19 +210,27 @@ auto parse_input(string filename) {
             cubes.add_cube(x, y, 0, active);
         }
     }
-    
-    writeln(lines);
     return cubes;
 }
 
 void main()
 {
     auto start_time = MonoTime.currTime;
-    auto cubes = parse_input("input.txt");
+    const string filename = "test_input.txt";
+    auto cubes = parse_input(filename);
     cubes.initialize_cube_neighbors();
     foreach (round; 1 .. 7) {
         cubes.update_cubes(round);
     }
-    auto end_time = MonoTime.currTime;
-    writeln("Elapsed time: ", float((end_time - start_time).total!"usecs") / 1000, " ms");
+    auto end_time1 = MonoTime.currTime;
+    HypercubeContainer cubes2 = parse_input_pt2(filename);
+    cubes2.initialize_cube_neighbors();
+    writeln();
+    foreach (round; 1 .. 7) {
+        cubes2.update_cubes(round);
+    }
+    auto end_time2 = MonoTime.currTime;
+    writeln("Elapsed time (pt 1): ", float((end_time1 - start_time).total!"usecs") / 1000, " ms");
+    writeln("Elapsed time (pt 2): ", float((end_time2 - end_time1).total!"usecs") / 1000, " ms");
+    writeln("Elapsed time (total): ", float((end_time2 - start_time).total!"usecs") / 1000, " ms");
 }
