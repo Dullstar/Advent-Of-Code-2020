@@ -112,9 +112,8 @@ class Expression:
 
     @staticmethod
     def evaluate_2(terms: list):
-        """Evaluates the expression by the second rule_set (by organizing the list of terms appropriately and
-        calling part 1). Like the evaluate function, it can be explicitly called, but it's still better
-        to call this through the result_2 property, which will make the call if it needs to."""
+        """Evaluates the expression by the second rule_set. Like the evaluate function, it can be explicitly called, 
+        but it's still better to call this through the result_2 property, which will make the call if it needs to."""
 
         add_terms = []
         mul_terms = []
@@ -131,6 +130,7 @@ class Expression:
                 term = term.result_2
             product *= term
 
+        self._result_2 = product
         return product
 
 
