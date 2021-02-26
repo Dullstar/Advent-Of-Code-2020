@@ -1,153 +1,109 @@
+import time
+
+
 class Seat:
-    def __init__(self, exists: bool, occupied: bool):
-        # Giving the seat an exists flag instead of taking advantage of the ability to mix None and objects in a list
-        # is mostly just to help the IDE out.
-        self.exists = exists
-        self.occupied = occupied
+    def __init__(self, x: int, y: int):
+        self.occupied = False
+        self.occupied_neighbors = 0
+        self.neighbors = []
+        self.x = x
+        self.y = y
 
 
 class Layout:
-    def __init__(self, layout: str):
-        layout = layout.split("\n")
-        # handle end of file newline if present
-        if len(layout[-1]) == 0:
-            del layout[-1]
-        self.x = len(layout[0])
-        self.y = len(layout)
-        self.layout = []
+    def __init__(self, seats: dict, max_x: int, max_y: int):
+        self.seats = seats
+        self.max_x = max_x
+        self.max_y = max_y
 
-        for line in layout:
-            for char in line:
-                if char == "L":
-                    self.layout.append(Seat(True, False))
-                else:
-                    self.layout.append(Seat(False, False))
-        # We can use this to reset things if we need to.
-        self.original_layout = [Seat(seat.exists, seat.occupied) for seat in self.layout]
+    def reset_layout(self):
+        for seat in self.seats.values():
+            seat.occupied = False
+            seat.occupied_neighbors = 0
+            seat.neighbors = []
 
-    def get_seat_index(self, x: int, y: int, warn=True):
-        index = (y * self.x) + x
-        if x < 0 or y < 0 or x >= self.x or y >= self.y:
-            if warn:
-                print(f"Tried accessing invalid coordinate ({x}, {y}); maximum is ({self.x - 1}, {self.y - 1})")
-                print(self.layout[-1])
-            raise IndexError
-        return index
+    def init_seat_neighbors_p1(self):
+        potential_neighbors = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        for seat in self.seats.values():
+            for relative_coord in potential_neighbors:
+                neighbor_coords = relative_coord[0] + seat.x, relative_coord[1] + seat.y
+                if neighbor_coords in self.seats:
+                    seat.neighbors.append(self.seats[neighbor_coords])
 
-    # This probably repeats a lot of work, but we'll wait to think of optimizations until it becomes a problem
-    def get_num_occupied_adjacent_seats(self, x: int, y: int):
-        # Relative coordinates of seats to check.
-        seats_to_check = [(0, 1), (-1, -1), (-1, 1), (1, 1), (1, -1), (-1, 0), (1, 0), (0, -1)]
-        total = 0
-        for seat in seats_to_check:
-            seat = (x + seat[0], y + seat[1])
-            # Bounds check
-            if (seat[0] < 0) or (seat[0] >= self.x) or (seat[1] < 0) or (seat[1] >= self.y):
-                continue
-            index = self.get_seat_index(seat[0], seat[1])
-            if self.layout[index].exists and self.layout[index].occupied:
-                total += 1
-        return total
+    def init_seat_neighbors_p2(self):
+        search_directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        for seat in self.seats.values():
+            for direction in search_directions:
+                current = direction[0] + seat.x, direction[1] + seat.y
+                while (current[0] >= 0) and (current[0] < self.max_x) \
+                        and (current[1] >= 0) and (current[1] < self.max_y):
+                    if current in self.seats:
+                        seat.neighbors.append(self.seats[current])
+                        break
+                    else:
+                        current = direction[0] + current[0], direction[1] + current[1]
 
-    def get_num_occupied_visible_seats(self, x: int, y: int):
-        # Relative coordinates of directions to check.
-        directions_to_check = [(0, 1), (-1, -1), (-1, 1), (1, 1), (1, -1), (-1, 0), (1, 0), (0, -1)]
-        total = 0
-        for direction in directions_to_check:
-            if self.get_if_occupied_seats_in_direction(x, y, direction):
-                total += 1
-        return total
+    def occupy_seats(self, occupancy_tolerance):
+        changes = True
+        while changes:
+            changes = False
+            # Push presence to neighbors
+            for seat in self.seats.values():
+                if seat.occupied:
+                    for neighbor_seat in seat.neighbors:
+                        neighbor_seat.occupied_neighbors += 1
 
-    # Note: start on the source seat. This will look ahead.
-    def get_if_occupied_seats_in_direction(self, x, y, direction: tuple):
-        try:
-            index = self.get_seat_index(x + direction[0], y + direction[1], warn=False)
-        except IndexError:
-            return False
-        if self.layout[index].exists:
-            if self.layout[index].occupied:
-                return True
-            else:
-                return False
-        else:
-            # We want to propagate this directional check until we hit a chair or the edge.
-            return self.get_if_occupied_seats_in_direction(x + direction[0], y + direction[1], direction)
+            # Update seats
+            for seat in self.seats.values():
+                if seat.occupied and (seat.occupied_neighbors > occupancy_tolerance):
+                    seat.occupied = False
+                    changes = True
+                elif (not seat.occupied) and (seat.occupied_neighbors == 0):
+                    seat.occupied = True
+                    changes = True
+                seat.occupied_neighbors = 0  # reset this for the next round
 
-    # It's a bit hacky, but it's a more DRY way of implementing Part 2 than just copying this function.
-    # Part 1 gets the default values, Part 2's changes have to be explicitly passed. Backwards compatibility ;)
-    def occupy_seats(self, rounds=1, max_seats=4, scenario=1):
-        # We don't want the iteration ordering to affect the results, so we make our changes to a copy first.
-        # And apparently we have to use a list comprehension to do this, because this is basically a list of
-        # pointers because of how Python works. Extremely irritating.
-        new_layout = [Seat(seat.exists, seat.occupied) for seat in self.layout]
-        for y in range(self.y):
-            for x in range(self.x):
-                index = self.get_seat_index(x, y)
-                # self.debug_adjacent_seats(x, y)
-                if not self.layout[index].exists:
-                    continue
-                if scenario == 1:
-                    nearby_seats = self.get_num_occupied_adjacent_seats(x, y)
-                else:
-                    nearby_seats = self.get_num_occupied_visible_seats(x, y)
-
-                if (not self.layout[index].occupied) and nearby_seats == 0:
-                    new_layout[index].occupied = True
-                elif nearby_seats >= max_seats:
-                    new_layout[index].occupied = False
-
-        found = True
-        for i in range(len(new_layout)):
-            if (new_layout[i].occupied != self.layout[i].occupied or
-                    new_layout[i].exists != self.layout[i].exists):
-                found = False
-                break
-        if found:
-            return
-        self.layout = new_layout
-        # self.print()  # Kinda slow, but useful for taking a peak inside the magic box.
-        self.occupy_seats(rounds + 1, max_seats, scenario)
-
-    def count_seats(self):
-        total = 0
-        for seat in self.layout:
-            if seat.occupied:
-                total += 1
-        return total
-
-    def print(self):
-        for y in range(self.y):
-            for x in range(self.x):
-                check = self.get_seat_index(x, y)
-                if not self.layout[check].exists:
-                    print(".", end="")
-                elif self.layout[check].occupied:
-                    print("#", end="")
-                else:
-                    print("L", end="")
-            print()
-
-    def reset_simulation(self):
-        self.layout = [Seat(seat.exists, seat.occupied) for seat in self.original_layout]
+    def count_occupied_seats(self) -> int:
+        occupied_seats = 0
+        for seat in self.seats.values():
+            occupied_seats += int(seat.occupied)
+        return occupied_seats
 
 
-def parse_input(filename):
+def parse_input(filename: str) -> Layout:
     with open(filename, "r") as file:
-        layout = Layout(file.read())
-    return layout
+        contents = file.read().strip().split("\n")
+        seats = {}
+        line_count = 0
+        for line in contents:
+            char_count = 0
+            for char in line:
+                if char == ".":
+                    pass
+                elif char == "L":
+                    seats[char_count, line_count] = Seat(char_count, line_count)
+                else:
+                    raise ValueError(f"Unexpected character in input: {char}")
+                char_count += 1
+            line_count += 1
+        return Layout(seats, char_count, line_count)
 
 
 def main():
-    # Parsing
+    start_time = time.time()
     layout = parse_input("input.txt")
-    # Part 1
-    layout.occupy_seats()
-    print("Scenario 1 Equilibrium: ", layout.count_seats())
-    # Part 2
-    layout.reset_simulation()
-    layout.occupy_seats(max_seats=5, scenario=2)
-    print("Scenario 2 Equilibrium: ", layout.count_seats())
-
+    layout.init_seat_neighbors_p1()
+    layout.occupy_seats(3)
+    print("Occupied seats (part 1): ", layout.count_occupied_seats())
+    end_time_1 = time.time()
+    print(f"Elapsed time (part 1): {(end_time_1 - start_time) * 1000:.2f} ms\n")
+    layout.reset_layout()
+    layout.init_seat_neighbors_p2()
+    layout.occupy_seats(4)
+    print("Occupied seats (part 2): ", layout.count_occupied_seats())
+    end_time_2 = time.time()
+    print(f"Elapsed time (part 2): {(end_time_2 - end_time_1) * 1000:.2f} ms\n")
+    print(f"Elapsed time (overall): {(end_time_2 - start_time) * 1000:.2f} ms")
 
 if __name__ == "__main__":
     main()
