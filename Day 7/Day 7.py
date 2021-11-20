@@ -53,18 +53,16 @@ class Rule:
 
 def parse_input(filename: str):
     with open(filename, "r") as file:
-        rules = []
+        rules = {}
         for line in file:
-            rules.append(Rule(line))
+            rule = Rule(line)
+            print(f"{rule.bag_type} contains {rule.contents}")
+            rules[rule.bag_type] = rule
         return rules
 
 
 def main():
-    rules = parse_input("input.txt")
-    rule_dict = {}
-    for rule in rules:
-        print(f"{rule.bag_type} contains {rule.contents}")
-        rule_dict[rule.bag_type] = rule
+    rule_dict = parse_input("input.txt")
     shiny_gold = 0
     for rule_entry in rule_dict.keys():
         rule = rule_dict[rule_entry]
@@ -72,9 +70,10 @@ def main():
             print(f"Found {rule.contents} in {rule.bag_type}")
             shiny_gold += 1
 
+    print("\n")
     print(f"Found {shiny_gold} bags containing at least one shiny gold bag.")
 
-    print(f"A shiny gold bag contains {rule_dict['shiny gold bag'].count_internal_bags(rule_dict)} bags")
+    print(f"A shiny gold bag contains {rule_dict['shiny gold bag'].count_internal_bags(rule_dict)} bags.")
 
 
 if __name__ == "__main__":
