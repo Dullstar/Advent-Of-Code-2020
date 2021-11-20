@@ -23,10 +23,7 @@ class Rule:
         self.bag_type = line[0][:-1]
 
     def contains_directly(self, bag_type: str):
-        if bag_type in self.contents:
-            return True
-        else:
-            return False
+        return bag_type in self.contents
 
     # Warning: recursive
     def contains(self, bag_type: str, rule_dict: dict):
