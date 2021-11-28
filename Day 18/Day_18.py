@@ -130,7 +130,6 @@ class Expression:
                 term = term.result_2
             product *= term
 
-        self._result_2 = product
         return product
 
 
