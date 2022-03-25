@@ -1,5 +1,7 @@
 # Advent-Of-Code-2020
-My solutions to the Advent of Code 2020 challenges
+My solutions to the Advent of Code 2020 challenges.
+
+This repository has been replaced with https://github.com/Dullstar/Advent_Of_Code. I've only kept this one around to avoid dead links in the 2020 solution sharing threads, as some of the changes are too drastic for a simple redirect to still find the right files.
 
 # Notes:
 For many days, a C++ version and a Python version is present. So far, each is kept to a single file for simplicity except for some common utility functions, which are placed in the "common" folder in this repository; if this changes, the files for each day will be grouped together, and if necessary, a separate subdirectory for the C++ and Python version may be created. If you wish to compile the C++ files, you should set the common folder as an additional include directory, as this repository does not come with a build system due to the fact that the individual code files are completely independent of each other (except for any dependencies placed in the common folder). Only the C++ versions rely on the common folder so far. Some of the exercises were also done in D. It's basically whatever I feel like at the time :)
